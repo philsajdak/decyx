@@ -62,10 +62,6 @@ You can modify the `config.py` file to customize various aspects of Decompanion:
 - `SKIP_PROMPT_CONFIRMATION`: Set to `True` to skip the prompt review step. By default, it is set to `False` so users can modify each prompt to their preferences.
 - `PROMPTS`: Customize the default prompts sent to the Claude API for each action.
 
-## Disclaimer
-
-
-
 ## References
 
 Decompanion accesses the [Swing library](https://docs.oracle.com/javase/8/docs/api/javax/swing/package-summary.html) for its GUI, and utilizes the [Ghidra API](https://ghidra.re/ghidra_docs/api/) for Ghidra-specific functionality.
