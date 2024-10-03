@@ -2,9 +2,10 @@
 
 import re
 from ghidra.app.decompiler import DecompInterface, DecompileOptions
-from ghidra.program.model.symbol import SourceType
+from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.pcode import HighFunctionDBUtil
 from ghidra.app.decompiler import ClangStatement
+from config import GLOBAL_VARIABLE_PATTERNS
 
 def initialize_decompiler():
     """
@@ -60,25 +61,57 @@ def annotate_code_with_addresses(code_markup):
 
 def find_global_variables(decompiled_code):
     """
-    Identifies global variables in the decompiled code based on naming patterns.
-
+    Identifies global variables in the decompiled code based on naming patterns defined in config.py.
     Args:
         decompiled_code (str): The decompiled C code of the function.
-
     Returns:
         set: A set of global variable names found in the code.
     """
-    global_pattern = re.compile(r'\bDAT_[0-9a-fA-F]+\b')
-    return set(global_pattern.findall(decompiled_code))
+    global_variables = set()
+    for pattern in GLOBAL_VARIABLE_PATTERNS:
+        global_variables.update(re.findall(pattern, decompiled_code))
+    return global_variables
+    
+def extract_global_variables(global_vars, currentProgram):
+    """
+    Extracts information about global variables.
+    Args:
+        global_vars (set): Set of global variable names.
+        currentProgram (Program): The current Ghidra program.
+    Returns:
+        list: A list of dictionaries, each representing a global variable with its details.
+    """
+    global_var_info = []
+    symbolTable = currentProgram.getSymbolTable()
+    
+    for global_var in global_vars:
+        symbols = symbolTable.getGlobalSymbols(global_var)
+        if symbols and len(symbols) > 0:
+            symbol = symbols[0]  # Get the first symbol if multiple exist
+            if symbol.getSymbolType() == SymbolType.LABEL:
+                addr = symbol.getAddress()
+                data = currentProgram.getListing().getDataAt(addr)
+                data_type = str(data.getDataType()) if data else "unknown"
+            else:
+                data_type = str(symbol.getObject().getDataType())
+        else:
+            data_type = "unknown"
+        
+        global_var_info.append({
+            "old_name": global_var,
+            "old_type": data_type,
+            "storage": "global"
+        })
+    
+    return global_var_info
 
-def extract_variables(func, decompiled_code):
+def extract_variables(func, decompiled_code, currentProgram):
     """
     Extracts all relevant variables from the function, including parameters, local variables, and globals.
-
     Args:
         func (Function): The function object from Ghidra.
         decompiled_code (str): The decompiled C code of the function.
-
+        currentProgram (Program): The current Ghidra program.
     Returns:
         list: A list of dictionaries, each representing a variable with its details.
     """
@@ -103,12 +136,8 @@ def extract_variables(func, decompiled_code):
     # Identify global variables referenced in the decompiled code
     global_vars = find_global_variables(decompiled_code)
     
-    for global_var in global_vars:
-        all_vars.append({
-            "old_name": global_var,
-            "old_type": "unknown",
-            "storage": "global"
-        })
+    # Extract global variables
+    all_vars.extend(extract_global_variables(global_vars, currentProgram))
     
     # Filter out variables with 'HASH' in their storage to exclude irrelevant entries
     return [var for var in all_vars if 'HASH' not in var['storage']]
@@ -149,7 +178,7 @@ def decompile_function(func, current_program, monitor, annotate_addresses=False)
         else:
             decompiled_code_str = decompiled_function.getC()
 
-        variables = extract_variables(func, decompiled_code_str)
+        variables = extract_variables(func, decompiled_code_str, current_program)
         return decompiled_code_str, variables
 
     except Exception as e:

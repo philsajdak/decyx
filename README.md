@@ -42,7 +42,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 2. Navigate to the function you want to analyze.
 
-3. Press `SHIFT + R`
+3. Press `SHIFT + R` (You can modify this hotkey in `Decompanion.py`)
 
 4. Follow the on-screen prompts to:
    - Select the Claude model to use
@@ -50,6 +50,9 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
    - Review and edit the generated prompt (if enabled)
    - Select caller functions to include for additional context
    - Review and apply the AI-generated suggestions
+   
+> [!IMPORTANT]
+> AI is a tool to assist and augment human analysis, not to replace it entirely. Users should always critically evaluate the suggestions.
 
 ## Configuration
 
@@ -58,6 +61,10 @@ You can modify the `config.py` file to customize various aspects of Decompanion:
 - `CLAUDE_MODELS`: List of available Claude models. By default, it uses `claude-3-5-sonnet-20240620` and will skip prompting for model selection if there is only one model in this list.
 - `SKIP_PROMPT_CONFIRMATION`: Set to `True` to skip the prompt review step. By default, it is set to `False` so users can modify each prompt to their preferences.
 - `PROMPTS`: Customize the default prompts sent to the Claude API for each action.
+
+## Disclaimer
+
+
 
 ## References
 

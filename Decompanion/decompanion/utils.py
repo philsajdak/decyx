@@ -69,58 +69,107 @@ def retype_variable(variable, new_type_name, tool):
         print "Error retyping variable '{}' to '{}': {}".format(
             variable.getName(), new_type_name, str(e))
         return False
+        
+def retype_global_variable(listing, symbol, new_data_type):
+    """Retype a global variable."""
+    addr = symbol.getAddress()
+    try:
+        # Clear existing data
+        listing.clearCodeUnits(addr, addr.add(new_data_type.getLength() - 1), False)
+        # Try to create new data
+        data = listing.createData(addr, new_data_type)
+        if data:
+            print "Retyped global variable '{}' to '{}'".format(symbol.getName(), new_data_type.getName())
+        else:
+            # If creation fails, try to modify existing data
+            existing_data = listing.getDataAt(addr)
+            if existing_data:
+                existing_data.setDataType(new_data_type, SourceType.USER_DEFINED)
+                print "Modified existing data type for global variable '{}' to '{}'".format(symbol.getName(), new_data_type.getName())
+            else:
+                print "Error: Failed to create or modify data for global variable '{}' with type '{}'".format(symbol.getName(), new_data_type.getName())
+    except Exception as e:
+        print "Error retyping global variable '{}' to '{}': {}".format(symbol.getName(), new_data_type.getName(), str(e))
+
+def rename_function(func, new_name):
+    """Rename the given function."""
+    func.setName(new_name, SourceType.USER_DEFINED)
+    print "Renamed function to '{}'".format(new_name)
+
+def rename_symbol(symbol, new_name):
+    """Rename the given symbol."""
+    old_name = symbol.getName()
+    symbol.setName(new_name, SourceType.USER_DEFINED)
+    print "Renamed variable '{}' to '{}'".format(old_name, new_name)
+
+def process_global_variable(symbol_table, listing, old_name, new_name, new_type_name, tool):
+    """Process a global variable for renaming and retyping."""
+    if old_name.startswith('_'):
+        old_name = old_name[1:]
+    
+    symbols = symbol_table.getSymbols(old_name)
+    symbol = next(symbols, None)
+    if symbol:
+        if new_name:
+            rename_symbol(symbol, new_name)
+        
+        if new_type_name:
+            new_data_type = find_data_type_by_name(new_type_name, tool)
+            if new_data_type:
+                retype_global_variable(listing, symbol, new_data_type)
+            else:
+                print "Data type '{}' not found for global variable '{}'".format(new_type_name, symbol.getName())
+    else:
+        print "Global variable '{}' not found".format(old_name)
+
+def process_local_variable(var_obj, new_name, new_type_name, tool):
+    """Process a local variable for renaming and retyping."""
+    if new_name:
+        rename_symbol(var_obj, new_name)
+    if new_type_name:
+        success = retype_variable(var_obj, new_type_name, tool)
+        if not success:
+            print "Warning: Failed to retype variable '{}' to '{}'. Skipping and continuing with other variables.".format(var_obj.getName(), new_type_name)
 
 def apply_selected_suggestions(func, suggestions, selected, tool):
     """
     Applies the selected suggestions for renaming and retyping of variables and functions.
-
     Args:
         func (Function): The function object being modified.
         suggestions (dict): The original suggestions for renaming/retyping.
         selected (dict): The selected suggestions to apply.
         tool (Tool): The tool context for data type operations.
-
     Returns:
         None
     """
-    # Apply function name renaming
-    if selected['function_name']:
-        func.setName(selected['function_name'], SourceType.USER_DEFINED)
-        print "Renamed function to '{}'".format(selected['function_name'])
-
-    # Apply variable renaming and retyping
-    all_vars = list(func.getParameters()) + list(func.getLocalVariables())
-    symbol_table = func.getProgram().getSymbolTable()
     
-    for i in range(len(suggestions['variables'])):
-        var_suggestion = selected['variables'][i]
+    # Get the program, listing, and symbol table from the function's context
+    program = func.getProgram()
+    listing = program.getListing()
+    symbol_table = program.getSymbolTable()
+    
+    # If a new function name is selected, apply the renaming
+    if selected['function_name']:
+        rename_function(func, selected['function_name'])
+    
+    # Gather all parameters and local variables of the function for processing
+    all_vars = list(func.getParameters()) + list(func.getLocalVariables())
+    
+    # Loop through the selected variable suggestions and apply changes
+    for i, var_suggestion in enumerate(selected['variables']):
         if var_suggestion:
             old_name = suggestions['variables'][i]['old_name']
             new_name = var_suggestion.get('new_name', None)
             new_type_name = var_suggestion.get('new_type', None)
             
-            # Check if it's a global variable (DAT_*)
-            if old_name.startswith("DAT_"):
-                symbols = symbol_table.getSymbols(old_name)
-                symbol = next(symbols, None)  # Get the first symbol if it exists
-                if symbol:
-                    if new_name:
-                        symbol.setName(new_name, SourceType.USER_DEFINED)
-                        print "Renamed global variable '{}' to '{}'".format(old_name, new_name)
-                    # Note: We can't change the type of global variables directly
-                else:
-                    print "Global variable '{}' not found".format(old_name)
+            # Check if it's a global variable that hasn't been renamed already (indicated by "DAT")
+            if "DAT" in old_name:
+                process_global_variable(symbol_table, listing, old_name, new_name, new_type_name, tool)
             else:
-                for var_obj in all_vars:
-                    if var_obj.getName() == old_name:
-                        if new_name:
-                            var_obj.setName(new_name, SourceType.USER_DEFINED)
-                            print "Renamed variable '{}' to '{}'".format(old_name, new_name)
-                        if new_type_name:
-                            success = retype_variable(var_obj, new_type_name, tool)
-                            if not success:
-                                print "Warning: Failed to retype variable '{}' to '{}'. Skipping and continuing with other variables.".format(var_obj.getName(), new_type_name)
-                        break
+                # Find the local variable object using the old name
+                var_obj = next((v for v in all_vars if v.getName() == old_name), None)
+                if var_obj:
+                    process_local_variable(var_obj, new_name, new_type_name, tool)
                 else:
                     print "Variable '{}' not found in function".format(old_name)
 

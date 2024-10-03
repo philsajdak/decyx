@@ -92,6 +92,9 @@ def get_response_from_claude(prompt, api_key, model, monitor, is_explanation=Fal
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 2000,
+            "temperature": 0.2,
+            "top_p": 1.0,
+            "top_k": 30
         }
 
         print "Sending request to Claude API..."

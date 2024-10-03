@@ -37,3 +37,9 @@ PROMPTS = {
         "}\n\n"
     )
 }
+
+# Global variable patterns
+GLOBAL_VARIABLE_PATTERNS = [
+    r'\bDAT_[0-9a-fA-F]+\b', # Default Ghidra pattern
+    r'\bg_\w+\b' # Most likely renamed by our script
+]
