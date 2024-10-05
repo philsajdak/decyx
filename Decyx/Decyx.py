@@ -6,14 +6,14 @@
 # @toolbar
 
 from ghidra.framework.preferences import Preferences
-from decompanion.config import CLAUDE_MODELS, SKIP_PROMPT_CONFIRMATION
-from decompanion.api import get_response_from_claude
-from decompanion.decompiler import decompile_function, decompile_callers
-from decompanion.utils import (
+from decyx.config import CLAUDE_MODELS, SKIP_PROMPT_CONFIRMATION
+from decyx.api import get_response_from_claude
+from decyx.decompiler import decompile_function, decompile_callers
+from decyx.utils import (
     apply_selected_suggestions, apply_line_comments, apply_explanation,
     prepare_prompt
 )
-from decompanion.gui import *
+from decyx.gui import *
 
 def get_api_key(preferences):
     """
@@ -116,7 +116,7 @@ def main():
             print "Failed to process action: {}".format(action)
             return
 
-    print "Decompanion operations completed successfully."
+    print "Decyx operations completed successfully."
 
 if __name__ == "__main__":
     main()

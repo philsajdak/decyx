@@ -1,6 +1,6 @@
 # api.py
 
-# Note: Decompanion doesn't use Anthropic's official python API as it is intended for Python 3+
+# Note: Decyx doesn't use Anthropic's official python API as it is intended for Python 3+
 
 import json
 import urllib2
