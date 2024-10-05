@@ -1,10 +1,10 @@
-# Decompanion
+# Decyx
 
-Decompanion is an __extension for Ghidra that leverages AI to assist in reverse engineering and binary analysis__.
+Decyx is an __extension for Ghidra that leverages AI to assist in reverse engineering and binary analysis__.
 
-It uses Anthropic's Claude API to provide intelligent suggestions for function and variable renaming, type inference, and code explanations. Decompanion prioritizes customized automation by allowing the user to edit each suggestion at each step of the way, without having the model forcefully modify the Ghidra project. This ensures that users maintain control over their reverse engineering workflows, tailoring suggestions to their specific needs and preferences.
+It uses Anthropic's Claude API to provide intelligent suggestions for function and variable renaming, type inference, and code explanations. Decyx prioritizes customized automation by allowing the user to edit each suggestion at each step of the way, without having the model forcefully modify the Ghidra project. This ensures that users maintain control over their reverse engineering workflows, tailoring suggestions to their specific needs and preferences.
 
-![Decompanion in action](imgs/showcase.gif)
+![Decyx in action](imgs/showcase.gif)
 
 ## Features
 
@@ -21,20 +21,20 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 - __Claude API key__. You can obtain one [here](https://www.anthropic.com/api).
 
 > [!NOTE]
-> Ghidra ships with a Python 2.7.3 extension system based on Jython, so Decompanion is written with this in mind.
+> Ghidra ships with a Python 2.7.3 extension system based on Jython, so Decyx is written with this in mind.
 
 ## Installation
 
 1. Clone this repository.
 
-2. Add the main `Decompanion` directory in Ghidra:
+2. Add the main `Decyx` directory in Ghidra:
    - Go to `Window` > `Script Manager`
    - In the `Script Manager` window, go to `Manage Script Directories`
-   - In the `Bundle Manager` window, add the `Decompanion` directory
+   - In the `Bundle Manager` window, add the `Decyx` directory
    - The script will be populated inside the `Script Manager` window. Enable it by checking the `In Tool` box.
 
 3. Add your Claude API key to Ghidra's preferences:
-   - When you run the Decompanion extension for the first time, it will prompt you to enter your Claude API key. Once entered, the key will be stored in Ghidra's preferences for future use.
+   - When you run the Decyx extension for the first time, it will prompt you to enter your Claude API key. Once entered, the key will be stored in Ghidra's preferences for future use.
 
 ## Usage
 
@@ -42,7 +42,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 2. Navigate to the function you want to analyze.
 
-3. Press `SHIFT + R` (You can modify this hotkey in `Decompanion.py`)
+3. Press `SHIFT + R` (You can modify this hotkey in `Decyx.py`)
 
 4. Follow the on-screen prompts to:
    - Select the Claude model to use
@@ -56,7 +56,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 ## Configuration
 
-You can modify the `config.py` file to customize various aspects of Decompanion:
+You can modify the `config.py` file to customize various aspects of Decyx:
 
 - `CLAUDE_MODELS`: List of available Claude models. By default, it uses `claude-3-5-sonnet-20240620` and will skip prompting for model selection if there is only one model in this list.
 - `SKIP_PROMPT_CONFIRMATION`: Set to `True` to skip the prompt review step. By default, it is set to `False` so users can modify each prompt to their preferences.
@@ -64,8 +64,8 @@ You can modify the `config.py` file to customize various aspects of Decompanion:
 
 ## References
 
-Decompanion accesses the [Swing library](https://docs.oracle.com/javase/8/docs/api/javax/swing/package-summary.html) for its GUI, and utilizes the [Ghidra API](https://ghidra.re/ghidra_docs/api/) for Ghidra-specific functionality.
+Decyx accesses the [Swing library](https://docs.oracle.com/javase/8/docs/api/javax/swing/package-summary.html) for its GUI, and utilizes the [Ghidra API](https://ghidra.re/ghidra_docs/api/) for Ghidra-specific functionality.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. Decompanion was made with Claude in mind but aims to integrate other AI APIs in the future.
+Contributions are welcome! Please feel free to submit a Pull Request. Decyx was made with Claude in mind but aims to integrate other AI APIs in the future.
