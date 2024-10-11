@@ -9,8 +9,8 @@ from javax.swing import (
 from javax.swing.table import DefaultTableCellRenderer, DefaultTableModel
 from java.awt import Color, Dimension, Font
 
-from decompanion.utils import find_data_type_by_name, format_new_type
-from decompanion.config import DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+from decyx.utils import find_data_type_by_name, format_new_type
+from decyx.config import DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 # Renderer Classes
 class BoldRenderer(DefaultTableCellRenderer):
