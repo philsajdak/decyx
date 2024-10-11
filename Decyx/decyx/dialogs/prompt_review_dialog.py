@@ -5,7 +5,7 @@ import javax.swing as swing
 from javax.swing import JFrame, JPanel, JButton, JScrollPane, BoxLayout, JLabel, JTextArea
 from java.awt import BorderLayout
 
-from decompanion.config import SKIP_PROMPT_CONFIRMATION
+from decyx.config import SKIP_PROMPT_CONFIRMATION
 
 # Dialog Class
 class PromptReviewDialog(JFrame):
