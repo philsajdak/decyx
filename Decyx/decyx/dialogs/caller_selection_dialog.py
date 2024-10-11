@@ -5,7 +5,7 @@ import javax.swing as swing
 from javax.swing import JFrame, JPanel, JCheckBox, JButton, JScrollPane, BoxLayout, JLabel, JTextArea
 from java.awt import BorderLayout, Dimension
 
-from decompanion.decompiler import decompile_function
+from decyx.decompiler import decompile_function
 
 # Dialog Class
 class CallerSelectionDialog(JFrame):
