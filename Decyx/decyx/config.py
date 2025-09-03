@@ -1,7 +1,7 @@
 # config.py
 
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-CLAUDE_MODELS = ["claude-3-5-sonnet-latest"]
+CLAUDE_MODELS = ["claude-sonnet-4-20250514"]
 
 # Set to True to enable fast selection and skip prompt confirmation windows
 SKIP_PROMPT_CONFIRMATION = False

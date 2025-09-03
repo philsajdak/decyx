@@ -58,7 +58,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 You can modify the `config.py` file to customize various aspects of Decyx:
 
-- `CLAUDE_MODELS`: List of available Claude models. By default, it uses `claude-3-5-sonnet-latest` and will skip prompting for model selection if there is only one model in this list.
+- `CLAUDE_MODELS`: List of available Claude models. By default, it uses `claude-sonnet-4-20250514` and will skip prompting for model selection if there is only one model in this list. This project was developed with the older model `claude-3-5-sonnet-latest` in mind, so if there are any issues, please use that model instead.
 - `SKIP_PROMPT_CONFIRMATION`: Set to `True` to skip the prompt review step. By default, it is set to `False` so users can modify each prompt to their preferences.
 - `PROMPTS`: Customize the default prompts sent to the Claude API for each action.
 
