@@ -170,8 +170,15 @@ def decompile_function(func, current_program, monitor, annotate_addresses=False)
         high_func = results.getHighFunction()
         code_markup = results.getCCodeMarkup()
 
-        # Commit any local names to the database
-        HighFunctionDBUtil.commitLocalNamesToDatabase(high_func, SourceType.USER_DEFINED)
+        # Commit local names to database within a transaction
+        if high_func is not None:
+            transaction = current_program.startTransaction("Commit Local Names")
+            try:
+                HighFunctionDBUtil.commitLocalNamesToDatabase(high_func, SourceType.USER_DEFINED)
+            except Exception as e:
+                print "Warning: Could not commit local names to database: {}".format(e)
+            finally:
+                current_program.endTransaction(transaction, True)
 
         if annotate_addresses:
             decompiled_code_str = annotate_code_with_addresses(code_markup)
