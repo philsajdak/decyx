@@ -21,7 +21,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 - __Claude API key__. You can obtain one [here](https://www.anthropic.com/api).
 
 > [!NOTE]
-> Ghidra ships with a Python 2.7.3 extension system based on Jython, so Decyx is written with this in mind.
+> Decyx is written in Java for compatibility with Ghidra 12+ (which dropped Jython/Python support).
 
 ## Installation
 
@@ -42,7 +42,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 2. Navigate to the function you want to analyze.
 
-3. Press `SHIFT + R` (You can modify this hotkey in `Decyx.py`)
+3. Press `SHIFT + R` (You can modify this hotkey in `Decyx.java`)
 
 4. Follow the on-screen prompts to:
    - Select the Claude model to use
@@ -56,10 +56,10 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 
 ## Configuration
 
-You can modify the `config.py` file to customize various aspects of Decyx:
+You can modify the `DecyxConfig.java` file (in `decyx/DecyxConfig.java`) to customize various aspects of Decyx:
 
 - `CLAUDE_MODELS`: List of available Claude models. By default, it uses `claude-sonnet-4-20250514` and will skip prompting for model selection if there is only one model in this list. This project was developed with the older model `claude-3-5-sonnet-latest` in mind, so if there are any issues, please use that model instead.
-- `SKIP_PROMPT_CONFIRMATION`: Set to `True` to skip the prompt review step. By default, it is set to `False` so users can modify each prompt to their preferences.
+- `SKIP_PROMPT_CONFIRMATION`: Set to `true` to skip the prompt review step. By default, it is set to `false` so users can modify each prompt to their preferences.
 - `PROMPTS`: Customize the default prompts sent to the Claude API for each action.
 
 ## References
