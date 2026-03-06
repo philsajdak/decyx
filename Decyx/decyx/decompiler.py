@@ -1,4 +1,5 @@
 # decompiler.py
+# @runtime Jython
 
 import re
 from ghidra.app.decompiler import DecompInterface, DecompileOptions

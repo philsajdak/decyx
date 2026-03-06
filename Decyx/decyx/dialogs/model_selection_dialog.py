@@ -1,4 +1,5 @@
 # model_selection_dialog.py
+# @runtime Jython
 
 import threading
 import javax.swing as swing

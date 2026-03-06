@@ -1,4 +1,5 @@
 # gui.py
+# @runtime Jython
 
 from decyx.dialogs.suggestion_dialog import show_suggestion_dialog
 from decyx.dialogs.caller_selection_dialog import show_caller_selection_dialog

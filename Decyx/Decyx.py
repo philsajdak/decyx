@@ -4,6 +4,7 @@
 # @keybinding Shift R
 # @menupath
 # @toolbar
+# @runtime Jython
 
 from ghidra.framework.preferences import Preferences
 from decyx.config import CLAUDE_MODELS, SKIP_PROMPT_CONFIRMATION
