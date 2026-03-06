@@ -38,15 +38,16 @@ def get_callers_code(func, current_program, monitor):
     callers = func.getCallingFunctions(monitor)
     if not callers:
         return None
-    
+
     print "Found {} caller(s) for the current function.".format(len(callers))
     selected_callers = show_caller_selection_dialog(list(callers), current_program, monitor)
     return decompile_callers(selected_callers, current_program, monitor) if selected_callers else None
 
 def process_action(action, func, current_program, monitor, api_key, model, callers_code):
     """
-    Process a specific action on the decompiled function, sending the data to the Claude API and applying the response.
-    Actions can include renaming, retyping variables, adding explanations, and inserting line comments.
+    Process a specific action on the decompiled function, sending the data to the Claude API
+    and applying the response. Actions can include renaming, retyping variables, adding
+    explanations, and inserting line comments.
     """
     decompiled_code, variables = decompile_function(func, current_program, monitor, annotate_addresses=(action == 'line_comments'))
     if not decompiled_code or not variables:
@@ -68,7 +69,7 @@ def process_action(action, func, current_program, monitor, api_key, model, calle
     if action == 'rename_retype':
         selected_suggestions = show_suggestion_dialog(response, variables, state.getTool())
         if selected_suggestions:
-            apply_selected_suggestions(func, response, selected_suggestions, state.getTool())
+            apply_selected_suggestions(func, response, selected_suggestions, state.getTool(), monitor)
         else:
             print "Operation cancelled by user after receiving suggestions."
             return False
@@ -81,7 +82,7 @@ def process_action(action, func, current_program, monitor, api_key, model, calle
 
 def main():
     """
-    The main entry point of the script. Responsible for gathering API keys, 
+    The main entry point of the script. Responsible for gathering API keys,
     selecting models and actions, and processing the actions on the current function.
     """
     api_key = get_api_key(Preferences)

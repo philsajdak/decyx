@@ -4,7 +4,7 @@
 import re
 from ghidra.app.decompiler import DecompInterface, DecompileOptions
 from ghidra.program.model.symbol import SourceType, SymbolType
-from ghidra.program.model.pcode import HighFunctionDBUtil
+from ghidra.program.model.pcode import HighSymbol
 from ghidra.app.decompiler import ClangStatement
 from config import GLOBAL_VARIABLE_PATTERNS
 
@@ -72,7 +72,7 @@ def find_global_variables(decompiled_code):
     for pattern in GLOBAL_VARIABLE_PATTERNS:
         global_variables.update(re.findall(pattern, decompiled_code))
     return global_variables
-    
+
 def extract_global_variables(global_vars, currentProgram):
     """
     Extracts information about global variables.
@@ -84,11 +84,11 @@ def extract_global_variables(global_vars, currentProgram):
     """
     global_var_info = []
     symbolTable = currentProgram.getSymbolTable()
-    
+
     for global_var in global_vars:
         symbols = symbolTable.getGlobalSymbols(global_var)
         if symbols and len(symbols) > 0:
-            symbol = symbols[0]  # Get the first symbol if multiple exist
+            symbol = symbols[0]
             if symbol.getSymbolType() == SymbolType.LABEL:
                 addr = symbol.getAddress()
                 data = currentProgram.getListing().getDataAt(addr)
@@ -97,55 +97,79 @@ def extract_global_variables(global_vars, currentProgram):
                 data_type = str(symbol.getObject().getDataType())
         else:
             data_type = "unknown"
-        
+
         global_var_info.append({
             "old_name": global_var,
             "old_type": data_type,
             "storage": "global"
         })
-    
+
     return global_var_info
 
-def extract_variables(func, decompiled_code, currentProgram):
+def extract_variables_from_high_function(high_func, decompiled_code, currentProgram):
     """
-    Extracts all relevant variables from the function, including parameters, local variables, and globals.
+    Extracts variables directly from the HighFunction, ensuring they match the
+    decompiler's in-memory view rather than potentially stale database entries.
+
     Args:
-        func (Function): The function object from Ghidra.
-        decompiled_code (str): The decompiled C code of the function.
+        high_func (HighFunction): The high-level function representation from the decompiler.
+        decompiled_code (str): The decompiled C code (used for global variable scanning).
         currentProgram (Program): The current Ghidra program.
+
     Returns:
         list: A list of dictionaries, each representing a variable with its details.
     """
     all_vars = []
-    
-    # Extract parameters
-    for param in func.getParameters():
+    seen_names = set()
+
+    local_symbol_map = high_func.getLocalSymbolMap()
+    symbols = local_symbol_map.getSymbols()
+
+    while symbols.hasNext():
+        sym = symbols.next()
+
+        # Skip compiler-generated temporaries and unnamed slots
+        name = sym.getName()
+        if not name or name.startswith("$$"):
+            continue
+
+        # Deduplicate - the symbol map can occasionally yield the same name twice
+        if name in seen_names:
+            continue
+        seen_names.add(name)
+
+        storage = sym.getStorage()
+        data_type = sym.getDataType()
+
+        storage_str = str(storage) if storage is not None else "unknown"
+        type_str = str(data_type) if data_type is not None else "undefined"
+
+        # Skip HASH storage slots (compiler hash temporaries)
+        if 'HASH' in storage_str:
+            continue
+
         all_vars.append({
-            "old_name": param.getName(),
-            "old_type": str(param.getDataType()),
-            "storage": str(param.getVariableStorage())
+            "old_name": name,
+            "old_type": type_str,
+            "storage": storage_str
         })
-    
-    # Extract local variables
-    for local_var in func.getLocalVariables():
-        all_vars.append({
-            "old_name": local_var.getName(),
-            "old_type": str(local_var.getDataType()),
-            "storage": str(local_var.getVariableStorage())
-        })
-    
-    # Identify global variables referenced in the decompiled code
+
+    # Append global variables referenced in the decompiled code
     global_vars = find_global_variables(decompiled_code)
-    
-    # Extract global variables
     all_vars.extend(extract_global_variables(global_vars, currentProgram))
-    
-    # Filter out variables with 'HASH' in their storage to exclude irrelevant entries
-    return [var for var in all_vars if 'HASH' not in var['storage']]
+
+    return all_vars
 
 def decompile_function(func, current_program, monitor, annotate_addresses=False):
     """
     Decompiles a given function to retrieve its C code and variable information.
+
+    The variable list is extracted from the HighFunction (the decompiler's in-memory
+    representation) so it always matches the code returned by getC(), regardless of
+    what is stored in Ghidra's database at the time of the call.
+
+    The database commit (commitLocalNamesToDatabase) is performed AFTER extraction so
+    it cannot alter the variable layout that was just read.
 
     Args:
         func (Function): The function to decompile.
@@ -171,22 +195,19 @@ def decompile_function(func, current_program, monitor, annotate_addresses=False)
         high_func = results.getHighFunction()
         code_markup = results.getCCodeMarkup()
 
-        # Commit local names to database within a transaction
-        if high_func is not None:
-            transaction = current_program.startTransaction("Commit Local Names")
-            try:
-                HighFunctionDBUtil.commitLocalNamesToDatabase(high_func, SourceType.USER_DEFINED)
-            except Exception as e:
-                print "Warning: Could not commit local names to database: {}".format(e)
-            finally:
-                current_program.endTransaction(transaction, True)
-
+        # Build the code string first, before any database writes
         if annotate_addresses:
             decompiled_code_str = annotate_code_with_addresses(code_markup)
         else:
             decompiled_code_str = decompiled_function.getC()
 
-        variables = extract_variables(func, decompiled_code_str, current_program)
+        # Extract variables from the HighFunction so they match the code string above
+        if high_func is not None:
+            variables = extract_variables_from_high_function(high_func, decompiled_code_str, current_program)
+        else:
+            print "Warning: HighFunction not available; falling back to database variable extraction."
+            variables = _extract_variables_from_db(func, decompiled_code_str, current_program)
+
         return decompiled_code_str, variables
 
     except Exception as e:
@@ -194,6 +215,40 @@ def decompile_function(func, current_program, monitor, annotate_addresses=False)
         return None, None
     finally:
         decomp_interface.dispose()
+
+def _extract_variables_from_db(func, decompiled_code, currentProgram):
+    """
+    Fallback: extracts variables from Ghidra's database (parameters + locals).
+    Used only when HighFunction is unavailable.
+
+    Args:
+        func (Function): The function object from Ghidra.
+        decompiled_code (str): The decompiled C code of the function.
+        currentProgram (Program): The current Ghidra program.
+
+    Returns:
+        list: A list of variable dictionaries.
+    """
+    all_vars = []
+
+    for param in func.getParameters():
+        all_vars.append({
+            "old_name": param.getName(),
+            "old_type": str(param.getDataType()),
+            "storage": str(param.getVariableStorage())
+        })
+
+    for local_var in func.getLocalVariables():
+        all_vars.append({
+            "old_name": local_var.getName(),
+            "old_type": str(local_var.getDataType()),
+            "storage": str(local_var.getVariableStorage())
+        })
+
+    global_vars = find_global_variables(decompiled_code)
+    all_vars.extend(extract_global_variables(global_vars, currentProgram))
+
+    return [var for var in all_vars if 'HASH' not in var['storage']]
 
 def decompile_callers(callers, current_program, monitor):
     """
@@ -209,10 +264,10 @@ def decompile_callers(callers, current_program, monitor):
     """
     decomp_interface = initialize_decompiler()
     decomp_interface.openProgram(current_program)
-    
+
     callers_code = {}
     total_callers = len(callers)
-    
+
     try:
         for index, caller in enumerate(callers):
             if monitor.isCancelled():
@@ -234,5 +289,5 @@ def decompile_callers(callers, current_program, monitor):
                 print "Exception during decompilation of caller '{}': {}".format(caller.getName(), e)
     finally:
         decomp_interface.dispose()
-    
+
     return callers_code
