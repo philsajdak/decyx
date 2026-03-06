@@ -21,7 +21,7 @@ It uses Anthropic's Claude API to provide intelligent suggestions for function a
 - __Claude API key__. You can obtain one [here](https://www.anthropic.com/api).
 
 > [!NOTE]
-> Ghidra ships with a Python 2.7.3 extension system based on Jython, so Decyx is written with this in mind.
+> The default Python scripting engine has been changed in Ghidra 12.0 from Jython to PyGhidra; Decyx uses # @runtime Jython in its scripts to maintain backwards compatibility with earlier versions.
 
 ## Installation
 
